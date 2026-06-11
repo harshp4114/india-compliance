@@ -75,7 +75,7 @@ class GSTR1(Document):
         log_name = f"GSTR1-{period}-{self.company_gstin}"
 
         gstr1_log = get_gst_return_log(
-            log_name, company=self.company, filing_preference=self.filing_preference
+            log_name, filing_preference=self.filing_preference
         )
 
         busy_message = None
@@ -144,7 +144,6 @@ class GSTR1(Document):
         """
 
         filters = frappe._dict(
-            company=self.company,
             company_gstin=self.company_gstin,
             month_or_quarter=self.month_or_quarter,
             year=self.year,

@@ -347,7 +347,6 @@ def get_gst_return_log(log_name, **kwargs):
 
     log = frappe.new_doc(DOCTYPE)
     log.return_period = period
-    log.company = get_party_for_gstin(gstin, "Company")
     log.gstin = gstin
     log.return_type = return_type
     log.update(kwargs)

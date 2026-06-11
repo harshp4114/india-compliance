@@ -158,9 +158,6 @@ class GSTR1Query:
         return query
 
     def get_query_with_common_filters(self, query):
-        if self.filters.company:
-            query = query.where(self.si.company == self.filters.company)
-
         if self.filters.company_gstin:
             query = query.where(self.si.company_gstin == self.filters.company_gstin)
 
@@ -711,7 +708,6 @@ class GSTR1DocumentIssuedSummary:
                 .else_(0)
                 .as_("same_gstin_billing"),
             )
-            .where(doctype.company == self.filters.company)
             .where(doctype.posting_date.between(self.filters.from_date, self.filters.to_date))
             .orderby(doctype.name)
             .groupby(doctype.name)
@@ -1009,7 +1005,6 @@ class GSTR11A11BData:
 
         conditions.append(self.gl_entry.is_cancelled == 0)
         conditions.append(self.gl_entry.voucher_type == "Payment Entry")
-        conditions.append(self.gl_entry.company == self.filters.get("company"))
         conditions.append(self.gl_entry.account.isin(gst_accounts_list))
         conditions.append(
             self.gl_entry.posting_date[self.filters.get("from_date") : self.filters.get("to_date")]

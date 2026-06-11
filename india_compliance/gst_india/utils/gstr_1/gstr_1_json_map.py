@@ -2551,7 +2551,8 @@ class GSTR1BooksData(BooksDataMapper):
     def prepare_advances_received_or_adjusted_data(self, type_of_business):
         advances_data = {}
         self.filters.type_of_business = type_of_business
-        gst_accounts = get_gst_accounts_by_type(self.filters.company, "Output")
+        company = get_party_for_gstin(self.filters.company_gstin,"Company")
+        gst_accounts = get_gst_accounts_by_type(company, "Output")
         _class = GSTR11A11BData(self.filters, gst_accounts)
 
         if type_of_business == "Advances":
@@ -2676,7 +2677,6 @@ class GSTR1BooksData(BooksDataMapper):
         for log_name in log_names:
             gstr1_log = get_gst_return_log(
                 log_name,
-                company=self.filters.company,
                 filing_preference=self.filters.filing_preference,
             )
 

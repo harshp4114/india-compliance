@@ -110,8 +110,7 @@ frappe.ui.form.on(DOCTYPE, {
         frm.gstr1 = new GSTR1(frm);
 
         // Set Default Values
-        frm.doc.company = frappe.defaults.get_user_default("Company");
-        frm.trigger("company");
+        set_options_for_company_gstin(frm);
         set_options_for_year(frm);
         set_options_for_month_or_quarter(frm);
 
@@ -190,14 +189,6 @@ frappe.ui.form.on(DOCTYPE, {
                 frm.trigger("load_gstr1_data");
             });
         });
-    },
-
-    async company(frm) {
-        render_empty_state(frm);
-        if (!frm.doc.company) return;
-        const options = await india_compliance.set_gstin_options(frm, false, true);
-
-        frm.set_value("company_gstin", options[0]);
     },
 
     company_gstin(frm) {
@@ -787,7 +778,14 @@ class GSTR1 {
     async show_rcm_journal_entry() {
         if (!frappe.perm.has_perm("Journal Entry")) return;
 
-        const { month_or_quarter, year, company, filing_preference } = this.frm.doc;
+        const { month_or_quarter, year, filing_preference } = this.frm.doc;
+        const company = await frappe.call({
+            method:"india_compliance.gst_india.utils.get_party_for_gstin",
+            args:{
+                gstin: this.frm.doc.company_gstin,
+                party_type: "Company",
+            }
+        })
         const { message: je_details } = await frappe.call({
             method: "india_compliance.gst_india.doctype.gstr_1.gstr_1.get_journal_entries",
             args: { month_or_quarter, year, company, filing_preference },
@@ -3200,12 +3198,19 @@ function render_empty_state(frm) {
 }
 
 async function get_net_gst_liability(frm) {
-    const { month_or_quarter, year, company, company_gstin, filing_preference } = frm.doc;
+    const { month_or_quarter, year, company_gstin, filing_preference } = frm.doc;
+    const { message } = await frappe.call({
+        method: "india_compliance.gst_india.utils.get_party_for_gstin",
+        args:{
+            gstin: company_gstin,
+            party_type: "Company",
+        }
+    })
 
     const response = await frappe.call({
         method: "india_compliance.gst_india.doctype.gstr_1.gstr_1.get_net_gst_liability",
         args: {
-            company,
+            company:message,
             company_gstin,
             month_or_quarter,
             year,
@@ -3253,4 +3258,13 @@ function set_options_for_year(frm) {
     const { options, current_year } = india_compliance.get_options_for_year(frm.doc.filing_preference);
     frm.get_field("year").set_data(options);
     frm.set_value("year", current_year);
+}
+
+async function set_options_for_company_gstin(frm) {
+    const { message } = await frappe.call({
+        method: "india_compliance.gst_india.utils.get_company_gstin_options",
+    });
+
+    if (!message) return;
+    frm.get_field("company_gstin").set_data(message);
 }

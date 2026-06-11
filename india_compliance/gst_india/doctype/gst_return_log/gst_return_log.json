@@ -10,7 +10,6 @@
   "filing_summary_section",
   "filing_status",
   "return_period",
-  "company",
   "return_type",
   "filing_preference",
   "is_nil",
@@ -59,13 +58,6 @@
    "label": "Return Period",
    "read_only": 1,
    "reqd": 1
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company",
-   "read_only": 1
   },
   {
    "fieldname": "column_break_sqwh",

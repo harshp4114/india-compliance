@@ -5,9 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "form",
-  "company",
   "file_nil_gstr1",
-  "column_break_ejve",
   "company_gstin",
   "column_break_ldkv",
   "year",
@@ -24,14 +22,6 @@
   {
    "fieldname": "form",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
   },
   {
    "fieldname": "company_gstin",

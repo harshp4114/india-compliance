@@ -10,6 +10,7 @@ from erpnext.accounts.party import get_default_contact
 from erpnext.accounts.utils import get_fiscal_year
 from erpnext.stock.get_item_details import purchase_doctypes
 from frappe import _
+from frappe.query_builder.functions import IfNull
 from frappe.contacts.doctype.contact.contact import get_contact_details
 from frappe.desk.form.load import get_docinfo, run_onload
 from frappe.utils import (
@@ -153,6 +154,56 @@ def get_party_for_gstin(gstin: str, party_type: str = "Supplier"):
     )
     if party:
         return party[0][0]
+
+@frappe.whitelist()
+def get_company_gstin_options():
+    """
+    Returns all company GSTINs with the companies linked to each GSTIN.
+
+    Used as options for the Company GSTIN field, where the GSTIN is the
+    value and the comma-separated company names are the description.
+    """
+    frappe.has_permission("Company", throw=True)
+
+    permitted_companies = frappe.get_list("Company", pluck="name")
+    if not permitted_companies:
+        return []
+
+    address = frappe.qb.DocType("Address")
+    dynamic_link = frappe.qb.DocType("Dynamic Link")
+
+    address_gstins = (
+        frappe.qb.from_(address)
+        .join(dynamic_link)
+        .on(address.name == dynamic_link.parent)
+        .select(address.gstin, dynamic_link.link_name)
+        .where(dynamic_link.parenttype == "Address")
+        .where(dynamic_link.link_doctype == "Company")
+        .where(dynamic_link.link_name.isin(permitted_companies))
+        .where(IfNull(address.gstin, "") != "")
+        .distinct()
+        .run()
+    )
+
+    company_gstins = frappe.get_all(
+        "Company",
+        filters={"name": ("in", permitted_companies), "gstin": ("is", "set")},
+        fields=["gstin", "name"],
+        as_list=True,
+    )
+
+    companies_by_gstin = {}
+    for gstin, company in (*address_gstins, *company_gstins):
+        companies_by_gstin.setdefault(gstin, set()).add(company)
+
+    return [
+        {
+            "value": gstin,
+            "label": gstin,
+            "description": ", ".join(companies),
+        }
+        for gstin, companies in companies_by_gstin.items()
+    ]
 
 
 @frappe.whitelist()
